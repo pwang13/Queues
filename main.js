@@ -4,7 +4,7 @@ var express = require('express')
 var fs      = require('fs')
 var app = express()
 // REDIS
-//var client = redis.createClient(6379, '127.0.0.1', {})
+var client = redis.createClient(6379, '127.0.0.1', {})
 
 ///////////// WEB ROUTES
 
@@ -35,24 +35,44 @@ app.use(function(req, res, next)
 //    res.status(204).end()
 // }]);
 
-// app.get('/meow', function(req, res) {
-// 	{
-// 		if (err) throw err
-// 		res.writeHead(200, {'content-type':'text/html'});
-// 		items.forEach(function (imagedata) 
-// 		{
-//    		res.write("<h1>\n<img src='data:my_pic.jpg;base64,"+imagedata+"'/>");
-// 		});
-//    	res.end();
-// 	}
-// })
+app.get('/set', function(req, res) {
+	{
+		var key = "testKey";
+		var msg = "in 10s";
+		client.set(key, msg);
+		res.send('ok');
+		client.lpush("mylist", "/set");
+	}
+});
+
+app.get('/get', function(req, res) {
+	{
+		var key = "testKey";
+		client.get(key, function(err, value){
+			res.send(value);
+		});
+		client.lpush("mylist", "/get");
+	}
+});
+
+
+app.get("/recent", function(req, res) {
+	var key = "mylist";
+	client.lrange(key, 0, 9, function(err, value) {
+		var resStr = "";
+		for (var v in value) {
+			resStr += value[v] + "<br/>";
+		}
+			res.send(resStr);
+	});
+});
 
 // HTTP SERVER
-// var server = app.listen(3000, function () {
+var server = app.listen(4000, function () {
 
-//   var host = server.address().address
-//   var port = server.address().port
+  var host = server.address().address
+  var port = server.address().port
 
-//   console.log('Example app listening at http://%s:%s', host, port)
-// })
+  console.log('Example app listening at http://%s:%s', host, port)
+});
 
