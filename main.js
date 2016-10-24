@@ -13,7 +13,6 @@ app.use(function(req, res, next)
 {
 	console.log(req.method, req.url);
 
-	// ... INSERT HERE.
 
 	next(); // Passing the request to the next handler in the stack.
 });
@@ -35,11 +34,16 @@ app.use(function(req, res, next)
 //    res.status(204).end()
 // }]);
 
+var sendResponse = function(res, msg) {
+
+}
+
 app.get('/set', function(req, res) {
 	{
 		var key = "testKey";
-		var msg = "in 10s";
+		var msg = "this message will self-destruct in 10 seconds.";
 		client.set(key, msg);
+		client.expire(key, 10);
 		res.send('ok');
 		client.lpush("mylist", "/set");
 	}
@@ -68,7 +72,9 @@ app.get("/recent", function(req, res) {
 });
 
 // HTTP SERVER
-var server = app.listen(4000, function () {
+
+var appPort = 4000;
+var server = app.listen(appPort, function () {
 
   var host = server.address().address
   var port = server.address().port
