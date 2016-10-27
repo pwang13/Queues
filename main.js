@@ -3,6 +3,8 @@ var multer  = require('multer')
 var express = require('express')
 var fs      = require('fs')
 var app = express()
+var spawn = require('child_process').spawn;
+
 // REDIS
 var recentKey = "recent Key";
 var client = redis.createClient(6379, '127.0.0.1', {})
@@ -98,11 +100,52 @@ app.get("/recent", function(req, res) {
 	});
 });
 
+//spawn
+
+var serverKey = "serverKey";
+app.get("/spawn", function(req, res) {
+	var serverNum = 0;
+	client.get(serverNumKey, function(err, reply) {
+		if (err) {
+			throw err;
+		}
+    	// console.log("server Number: " + serverNum);
+    	console.log(reply == null);
+    	if (reply == null) {
+    		serverNum = 1;
+    	} else {
+    		serverNum = parseInt(reply) + 1;
+    	}
+    	client.set(serverNumKey, serverNum, function (err, reply) {
+			console.log("set servers: " + reply);
+		});
+    	var port = parseInt(appPort) + serverNum;
+    	var server_procs = spawn('node', ['main.js', port]);
+		var url = 'http://localhost:'+port;
+		console.log("created new server listening on: " + url);
+		client.sadd([serverKey, url], function(err, reply){
+			if (err) {
+				throw err;
+			}
+			if (reply == 1) {
+				console.log("pushed to redis succeed: " + reply);
+				res.send("succeed!");
+			} else {
+				console.log("pushed to redis failed: " + reply);
+				res.send("failed!");
+			}
+
+		});
+	});
+});
+
+
 // HTTP SERVER
-
-var appPort = 4000;
+var serverNumKey = "serverNumKey";
+var appPort = process.argv.slice(2)[0];
 var server = app.listen(appPort, "127.0.0.1", function () {
-
+	// client.lpush([serverKey, ])
+	
 	var host = server.address().address;
 	var port = server.address().port;
 	console.log(host);
