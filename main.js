@@ -100,8 +100,7 @@ app.get("/recent", function(req, res) {
 	});
 });
 
-//spawn
-
+//create and destory servers
 var serverKey = "serverKey";
 app.get("/spawn", function(req, res) {
 	var serverNum = 0;
@@ -118,26 +117,49 @@ app.get("/spawn", function(req, res) {
     	}
     	client.set(serverNumKey, serverNum, function (err, reply) {
 			console.log("set servers: " + reply);
-		});
-    	var port = parseInt(appPort) + serverNum;
-    	var server_procs = spawn('node', ['main.js', port]);
-		var url = 'http://localhost:'+port;
-		console.log("created new server listening on: " + url);
-		client.sadd([serverKey, url], function(err, reply){
-			if (err) {
-				throw err;
-			}
-			if (reply == 1) {
-				console.log("pushed to redis succeed: " + reply);
-				res.send("succeed!");
-			} else {
-				console.log("pushed to redis failed: " + reply);
-				res.send("failed!");
-			}
+			var port = parseInt(appPort) + serverNum;
+	    	var server_procs = spawn('node', ['main.js', port]).pid;
+	    	console.log("process id: " + server_procs);
+			var url = 'http://localhost:'+port;
+			console.log("created new server listening on: " + url);
+			// client.sadd([serverKey, server_procs], function(err, reply){
+			// 	if (err) {
+			// 		throw err;
+			// 	}
+			// 	if (reply == 1) {
+			// 		console.log("pushed to redis succeed: " + reply);
+			// 		res.send("succeed!");
+			// 	} else {
+			// 		console.log("pushed to redis failed: " + reply);
+			// 		res.send("failed!");
+			// 	}
 
+			// });
+			// client.hmset('servers', "url", "server_procs", function (err, reply) {
+			// 	if (err) {
+			// 		throw err;
+			// 	}
+
+			// 	console.log("add server: " + reply);
+			// 	res.send("OK");
+			// });
+			client.hmset('servers', url, server_procs);
+			res.send('OK');
 		});
 	});
 });
+
+app.get("/destory", function(req, res) {
+	// client.smembers(serverKey, function(err, reply) {
+ //    	console.log(reply);
+ //    	res.send(reply);
+	// });
+	client.hgetall('servers', function(err, object) {
+	    console.log(object);
+	    res.send(object);
+	});
+});
+
 
 
 // HTTP SERVER
