@@ -62,20 +62,7 @@ app.get('/destory', function(req, res) {
 
 
 app.post('/upload',[ multer({ dest: './uploads/'}), function(req, res){
-   console.log(req.body) // form fields
-   console.log(req.files) // form files
-
-   if( req.files.image )
-   {
-	   fs.readFile( req.files.image.path, function (err, data) {
-	  		if (err) throw err;
-	  		var img = new Buffer(data).toString('base64');
-			client.lpush("myimg",img)
-	  		console.log(img);
-		});
-	}
-
-   res.status(204).end()
+   proxy(req,res);
 }]);
 // HTTP SERVER
 var server = app.listen(3000, "127.0.0.1", function () {
