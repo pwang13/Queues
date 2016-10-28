@@ -23,7 +23,7 @@ In our [redis workshop](https://github.com/CSC-DevOps/Queues), we worked with se
 
 Your assignment is to complete the workshop assignment with the following additional considerations:
 
-*`/get` and `/set`.
+#### `/get` and `/set`.
 
 When `/set` is visited, set a new key, with the value:
 > "this message will self-destruct in 10 seconds".
@@ -32,9 +32,9 @@ Use the expire command to make sure this key will expire in 10 seconds.
 
 When `/get` is visited, fetch that key, and send value back to the client: `res.send(value)` 
 
-*Recent visited sites: `/recent`, which will display the most recently visited sites.
+####Recent visited sites: `/recent`, which will display the most recently visited sites.
 
-* Cat picture uploads: queue
+#### Cat picture uploads: queue
 
 Implement two routes, `/upload`, and `/meow`.
  
@@ -46,6 +46,6 @@ Use curl to help you upload easily.
 
 Have `upload` store the images in a queue.  Have `meow` display the most recent image to the client and *remove* the image from the queue. 
 
-* Implement a new command `spawn`, which will create a new app server running on another port. Correspondingly, implement a new command `destroy`, which will destroy a random server. Available servers should be stored in redis, which can be seen by `listservers` command. Destroying all servers is undefined behavior.
+#### Implement a new command `spawn`, which will create a new app server running on another port. Correspondingly, implement a new command `destroy`, which will destroy a random server. Available servers should be stored in redis, which can be seen by `listservers` command. Destroying all servers is undefined behavior.
 
-* Create a proxy that will uniformly deliver requests to available servers. E.g., if a visit happens to `/` then toggle between `localhost:3000`, `localhost:3001`, etc.  Use redis to look up which server to resolve to.
+#### Create a proxy that will uniformly deliver requests to available servers. E.g., if a visit happens to `/` then toggle between `localhost:3000`, `localhost:3001`, etc.  Use redis to look up which server to resolve to.
