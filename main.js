@@ -102,6 +102,8 @@ app.get("/recent", function(req, res) {
 
 //create and destory servers
 var serverKey = "serverKey";
+var serverPairKey = "serverPairKey";
+var proxyKey = "proxyKey";
 app.get("/spawn", function(req, res) {
 	var serverNum = 0;
 	client.get(serverNumKey, function(err, reply) {
@@ -122,17 +124,19 @@ app.get("/spawn", function(req, res) {
 	    	console.log("process id: " + server_procs);
 			var url = 'http://localhost:'+port;
 			console.log("created new server listening on: " + url);
-			// client.sadd([serverKey, server_procs], function(err, reply){
-			// 	if (err) {
-			// 		throw err;
-			// 	}
-			// 	if (reply == 1) {
-			// 		console.log("pushed to redis succeed: " + reply);
-			// 		res.send("succeed!");
-			// 	} else {
-			// 		console.log("pushed to redis failed: " + reply);
-			// 		res.send("failed!");
-			// 	}
+			client.sadd([serverKey, server_procs], function(err, reply){
+				if (err) {
+					throw err;
+				}
+				if (reply == 1) {
+					console.log("pushed to redis succeed: " + reply);
+					client.hmset(serverPairKey, server_procs, url);
+					client.lpush(proxyKey, url);
+					res.send("succeed!");
+				} else {
+					console.log("pushed to redis failed: " + reply);
+					res.send("failed!");
+				}
 
 			// });
 			// client.hmset('servers', "url", "server_procs", function (err, reply) {
@@ -143,18 +147,71 @@ app.get("/spawn", function(req, res) {
 			// 	console.log("add server: " + reply);
 			// 	res.send("OK");
 			// });
-			client.hmset('servers', url, server_procs);
-			res.send('OK');
+			
+			// res.send('OK');
+			});
 		});
 	});
 });
+
+function refreshProxy() {
+	client.hgetall(serverPairKey, function(err, object) {
+	    console.log(object);
+	    // res.send(object);
+		client.del(proxyKey, function() {
+			for (var key in object) {
+				client.lpush(proxyKey, object[key]);
+				console.log(object[key]);
+			}
+		});
+	});
+
+}
 
 app.get("/destory", function(req, res) {
 	// client.smembers(serverKey, function(err, reply) {
  //    	console.log(reply);
  //    	res.send(reply);
 	// });
-	client.hgetall('servers', function(err, object) {
+	client.SRANDMEMBER(serverKey, function(err, pid) {
+		if (err) 
+			throw err;
+
+		console.log(pid);
+		if (pid == null) {
+			console.log("don't have any other server to destory!");
+			res.send("failed, don't have any other server to destory!")
+		} else {
+			client.SREM(serverKey, pid, function(err, reply) {
+				if (err)
+					throw err;
+				if (reply == 0) {
+					console.log("remove failed, can't find correspondent server!");
+					res.send("ERROR");
+				} else {
+					client.hdel(serverPairKey, pid, function(err, rmNumber) {
+						if (err)
+							throw err;
+						refreshProxy();
+						process.kill(pid, 'SIGHUP');
+						res.send("OK");
+					});
+				}
+			});
+		}
+		
+	});
+});
+
+app.get("/listservers", function(req, res) {
+	// client.smembers(serverKey, function(err, reply) {
+ //    	console.log(reply);
+ //    	res.send(reply);
+	// });
+	// client.lrange(serverKey, 0, -1, function(err, value) {
+	// 	res.send(value);
+	// });
+	client.hgetall(serverPairKey, function(err, object) {
 	    console.log(object);
 	    res.send(object);
 	});
